@@ -1,0 +1,177 @@
+{% extends "base/layout.html" %}
+{% load static %}
+{% block body %}
+
+    <noscript>
+        Please active javascript on your browser.
+    </noscript>
+    <div class="exam-tab">
+        <div class="wrapper">
+            <div class="body">
+                <div id="examBuilder" class="container">
+                    <div class="px-2 py-4 border-bottom">
+                        <div class="header">
+                            <label for="header-checkbox">
+                                <h5>
+                                    Courses 
+                                </h5>
+                            </label>
+                        </div>
+                        <div id="courses">
+                        </div>
+                    </div>
+                    <div class="px-2 py-3">
+                        <div class="header">
+                            <label for="header-checkbox">
+                                <span class="h6">
+                                    Question Mode
+                                </span>
+                                <div class="img-wrapper info">
+                                    <img class='info-icon' src="{% static 'htmlAsset/images/info.svg' %}">
+                                </div>
+                            </label>
+                        </div>
+                        <div class="row py-2 border-bottom">
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-0" class="radio-label" id="unused">
+                                    <input type="radio" class="content-radio" id="question-mode-0" name="question-mode" data="UNUSED">
+                                    <div class="radio-div"><div class="dot"></div></div>    
+                                    <span class="content-text">
+                                        Unused
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-1" class="radio-label" id="used">
+                                    <input type="radio" class="content-radio" id="question-mode-1" name="question-mode" data="USED">
+                                    <div class="radio-div"><div class="dot"></div></div>
+                                    <span class="content-text">
+                                        Used
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-2" class="radio-label" id="correct">
+                                    <input type="radio" class="content-radio" id="question-mode-2" name="question-mode" data="CORRECT">
+                                    <div class="radio-div"><div class="dot"></div></div>
+                                    <span class="content-text">
+                                        Correct
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                          
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-3" class="radio-label" id="incorrect">
+                                    <input type="radio" class="content-radio" id="question-mode-3" name="question-mode" data="INCORRECT">
+                                    <div class="radio-div"><div class="dot"></div></div>
+                                    <span class="content-text">
+                                        Incorrect
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-4" class="radio-label" id="marked">
+                                    <input type="radio" class="content-radio" id="question-mode-4" name="question-mode" data="MARKED" checked="">
+                                    <div class="radio-div"><div class="dot"></div></div>
+                                    <span class="content-text">
+                                        Marked
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                                <div class="col-xl-3 py-2">
+                                    <label for="question-mode-5" class="radio-label" id="all">
+                                    <input type="radio" class="content-radio" id="question-mode-5" name="question-mode" data="ALL" checked="">
+                                    <div class="radio-div"><div class="dot"></div></div>
+                                    <span class="content-text">
+                                        All
+                                    </span>
+                                    <span class="available-question">0</span>
+                                </label>
+                                </div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column border-bottom py-2 px-2">
+                        <div class="">
+                            <label class='checkbox-label d-flex align-items-center' for="header-checkbox-0">
+                                <div class="checkbox-div"><div class="tick"></div></div>
+                                <h6 class="mb-0 ml-2">Topics</h6>
+                            </label>
+                        </div>
+                        <div class="py-3 px-4" id="topics">
+
+                        </div>
+                    </div>
+                    <div class="px-2 py-4">
+                        <div class="header">
+                            <label class="d-flex" for="header-checkbox" id="noOfQuestion">
+                                <h6 class="mb-0">
+                                    No. of Questions
+                                </h6>
+                                <span class="available-question">0</span>
+                            </label>
+                        </div>
+                        <div class="content">
+                            <div class="input-field">
+                                <label for='numberOfQuestion'>
+                                    <span>Number Of Questions (Max: 200 questions)</span>
+                                    <input type='number' id='numberOfQuestion' value='100'>
+                                </label>
+                            </div>
+                            <div class="input-field">
+                                <label for='secPerQuestion'>
+                                    <span>Seconds Per Question (Max: 360 seconds)</span>
+                                    <input type='number' id='secPerQuestion' value='60'>
+                                </label>
+                            </div>
+                            <div class="info">
+                                <span class='text'>You have <span class='time-text'>0:00 minute(s)</span> for selected topics on test.</span>
+                            </div>
+                            <div class="button-wrapper">
+                                <button class="create-test">
+                                    Generate Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <iframe id="testModule" frameborder="0"></iframe>
+        </div>
+    </div>
+    <script>
+         function isJsonString(str) {
+            try {
+                JSON.parse(str);
+            } catch (e) {
+                return false;
+            }
+            return true;
+        }
+        function stripHtml(html)
+        {
+            let tmp = document.createElement("DIV");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+        }
+        
+        let qs = JSON.parse(stripHtml("{{q}}"))
+   
+        var questions = qs.map(x => ({
+            "correctAnswerIndex": x.correctAnswerIndex,
+            "exp": x.exp,
+            "id": x.id,
+            "question": x.question,
+        }))
+
+        let d = "{{ data }}"
+
+        let data = JSON.parse(stripHtml(d));
+    </script>
+    <script src="{% static 'htmlAsset/js/homepage.js' %}"></script>
+
+    {% endblock %}

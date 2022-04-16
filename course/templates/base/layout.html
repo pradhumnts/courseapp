@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Webpixels">
+    <title>Home</title>
+    <!-- Preloader -->
+    <style>
+        @keyframes hidePreloader {
+            0% {
+                width: 100%;
+                height: 100%;
+            }
+
+            100% {
+                width: 0;
+                height: 0;
+            }
+        }
+
+        body>div.preloader {
+            position: fixed;
+            background: white;
+            width: 100%;
+            height: 100%;
+            z-index: 1071;
+            opacity: 0;
+            transition: opacity .5s ease;
+            overflow: hidden;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body:not(.loaded)>div.preloader {
+            opacity: 1;
+        }
+
+        body:not(.loaded) {
+            overflow: hidden;
+        }
+
+        body.loaded>div.preloader {
+            animation: hidePreloader .5s linear .5s forwards;
+        }
+
+        @media only screen and (max-width: 400px){
+            .menubar{
+                display: none !important;
+            }
+        }
+    </style>
+    <script>
+        window.addEventListener("load", function() {
+            setTimeout(function() {
+                document.querySelector('body').classList.add('loaded');
+            }, 300);
+        });
+    </script>
+        <link rel="shortcut icon" href="{% static 'htmlAsset/images/favicon.jpg' %}">
+        <!-- Favicon -->
+        <link rel="icon" href="{% static 'assets/img/brand/favicon.png' %}" type="image/png"><!-- Font Awesome -->
+        <link rel="stylesheet" href="{% static 'assets/libs/@fortawesome/fontawesome-free/css/all.min.css' %}">
+        <!-- Quick CSS -->
+        <link rel="stylesheet" href="{% static 'assets/css/quick-website.css' %}" id="stylesheet">
+        <link rel="stylesheet" href="{% static 'htmlAsset/css/homepage.css' %}">
+</head>
+
+<body>
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" id="modal-cookies" data-backdrop="false" aria-labelledby="modal-cookies" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-aside left-4 right-4 bottom-4">
+            <div class="modal-content bg-dark-dark">
+                <div class="modal-body">
+                    <!-- Text -->
+                    <p class="text-sm text-white mb-3">
+                        We use cookies so that our themes work for you. By using our website, you agree to our use of cookies.
+                    </p>
+                    <!-- Buttons -->
+                    <a href="#" class="btn btn-sm btn-white" target="_blank">Learn more</a>
+                    <button type="button" class="btn btn-sm btn-primary mr-2" data-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Header -->
+    <header class="" id="header-main">
+        <!-- Navbar -->
+        <nav class="navbar navbar-main navbar-expand-lg navbar-dark bg-dark" id="navbar-main">
+            <div class="container">
+                <!-- Brand -->
+                <a class="navbar-brand" href="{% url 'index' %}">
+                    <img alt="Image placeholder" src="{% static 'assets/img/brand/light-mono.svg' %}" id="navbar-logo">
+                </a>
+                <!-- Toggler -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <!-- Collapse -->
+                <div class="collapse navbar-collapse navbar-collapse-overlay" id="navbar-main-collapse">
+                    <!-- Toggler -->
+                    <div class="position-relative">
+                        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-main-collapse" aria-controls="navbar-main-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                            <i data-feather="x"></i>
+                        </button>
+                    </div>
+                    <!-- Main navigation -->
+                    <ul class="navbar-nav ml-lg-auto">
+                        <!-- Overview -->
+                        <li class="nav-item nav-item-spaced d-none d-lg-block">
+                            <a class="nav-link" href="{% url 'index' %}">
+                                Home
+                            </a>
+                        </li>
+                        <!-- Landings menu -->
+                        <li class="nav-item nav-item-spaced dropdown dropdown-animate" >
+                            <a class="nav-link"  href="{% url 'course-list' %}" >
+                                Categories
+                            </a>
+                            
+                            <div class="dropdown-menu dropdown-menu-xl p-0 menubar">
+                                <div class="row no-gutters">
+                                    <div class="col-12 col-lg-6 order-lg-2">
+                                        <div class="dropdown-body dropdown-body-right bg-dropdown-secondary h-100">
+                                             
+                                            <div class="list-group list-group-flush">
+                                                <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                                                    <div class="media d-flex">
+                                                        <!-- SVG icon -->
+                                                        <span class="h6">
+                                                            <i data-feather="layout"></i>
+                                                        </span>
+                                                        <!-- Media body -->
+                                                        <div class="media-body ml-2">
+                                                            <a href="#" class="d-block heading h6 mb-0">Agency</a>
+                                                            <small class="text-sm text-muted mb-0">Quick's most important features</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                                                    <div class="media d-flex">
+                                                        <!-- SVG icon -->
+                                                        <span class="h6">
+                                                            <i data-feather="globe"></i>
+                                                        </span>
+                                                        <!-- Media body -->
+                                                        <div class="media-body ml-2">
+                                                            <a href="#" class="d-block h6 mb-0">Business</a>
+                                                            <small class="text-sm text-muted mb-0">Quick's most important features</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                                                    <div class="media d-flex">
+                                                        <!-- SVG icon -->
+                                                        <span class="h6">
+                                                            <i data-feather="camera"></i>
+                                                        </span>
+                                                        <!-- Media body -->
+                                                        <div class="media-body ml-2">
+                                                            <a href="#" class="d-block h6 mb-0">Studio</a>
+                                                            <small class="text-sm text-muted mb-0">Quick's most important features</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>                                           
+                                        </div>
+                                    </div>                                    
+                                </div>
+                            </div>
+                        
+                        </li>
+                        <!-- Pages menu -->
+                        <li class="nav-item nav-item-spaced dropdown dropdown-animate" >
+                            <a class="nav-link" href="{% url 'pricing' %}"   >
+                                Pricing</a>
+                             
+                        </li>                       
+                    </ul>
+                    <!-- Right navigation -->
+                    <ul class="navbar-nav align-items-lg-center d-none d-lg-flex ml-lg-auto">
+                        <!-- Auth -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">
+                                Sign in
+                            </a>
+                        </li>
+
+                        <li class="nav-item ml-3">
+                            <a href="{% url 'profile' %}">
+                                <img alt="Image placeholder" src="{% static 'assets/img/theme/light/person-1.jpg' %}" class="avatar  rounded-circle avatar-sm">
+                            </a>
+                        </li>
+                         
+                    </ul>
+                    
+                </div>
+            </div>
+        </nav>
+    </header>
+    {% block body %}
+    {% endblock %}
+      <!-- Core JS  -->
+      <script src="{% static 'assets/libs/jquery/dist/jquery.min.js' %}"></script>
+      <script src="{% static 'assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
+      <script src="{% static 'assets/libs/svg-injector/dist/svg-injector.min.js' %}"></script>
+      <script src="{% static 'assets/libs/feather-icons/dist/feather.min.js' %}"></script>
+      <!-- <script src="{% static '' %}assets/libs/jquery.scrollbar/jquery.scrollbar.min.js"></script> -->
+      <!-- <script src="{% static '' %}assets/libs/simplebar/dist/simplebar.min.js"></script> -->
+      <!-- Optional JS -->
+      <script src="{% static 'assets/libs/in-view/dist/in-view.min.js' %}"></script>
+      <script src="{% static 'assets/libs/sticky-kit/dist/sticky-kit.min.js' %}"></script>
+      <script src="{% static 'assets/libs/imagesloaded/imagesloaded.pkgd.min.js' %}"></script>
+      <!-- Quick JS -->
+      <script src="{% static 'assets/js/quick-website.js' %}"></script>
+      <!-- Feather Icons -->
+      <script>
+          feather.replace({
+              'width': '1em',
+              'height': '1em'
+          })
+      </script>
+    </body>
+    </html>
