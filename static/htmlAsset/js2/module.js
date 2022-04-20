@@ -75,17 +75,11 @@ window.Zoom = function(e, t) {
 }();
 
 
-
-
 function shuffle(array) {
     let counter = array.length;
     while (counter > 0) {
         let index = Math.floor(Math.random() * counter);
         counter--;
-        if (array[counter]["question"].includes('id="vignettedescriptor"') || array[index]["question"].includes('id="vignettedescriptor"') ||
-            array[counter]["question"].includes('Item 2 of 2') || array[index]["question"].includes('Item 2 of 2')) {
-            continue;
-        }
         let temp = array[counter];
         array[counter] = array[index];
         array[index] = temp;
@@ -101,6 +95,7 @@ class Test {
         this.topicNameElement = document.querySelector("nav .topic-name");
         this.questionsContainer = document.querySelector("main .questions-container");
         this.questionContainer = document.querySelector("main .question-exp-container .question");
+        this.markInput = document.querySelector("main .question-exp-container .mark-wrapper input");
         this.expContainer = document.querySelector("main .question-exp-container .exp-container .exp");
         this.nextQuestion = document.querySelector("nav .next-button");
         this.preQuestion = document.querySelector("nav .pre-button");
@@ -111,11 +106,10 @@ class Test {
         this.testResultoverlay = document.querySelector(".test-result");
         this.valuesButton = document.querySelector(".values");
         this.valuesWrapper = document.querySelector(".values-div-wrapper");
-        this.markInput = document.querySelector("main .question-exp-container .mark-wrapper input");
         this.markedData = markedData;
-        this.currentQuestion = 0;
         this.answerData = [];
         this.isFinished = false;
+        this.currentQuestion = 0;
         this.correctQuestion = 0;
         this.incorrectQuestion = 0;
         this.unAnsweredQuestion = 0;
@@ -124,64 +118,6 @@ class Test {
         this.numberOfQuestion = numberOfQuestion;
         this.questionData = questionData;
         this.time = this.secondsPerQuestion * this.numberOfQuestion;
-    }
-    Exhibit(elements) {
-        let showExhibit = (arr) => {
-            let viewer = document.createElement("div");
-            viewer.setAttribute("class", "viewer-wrapper");
-            let close = document.createElement("button");
-            close.innerHTML = "&times;";
-            close.setAttribute("class", "close-viewer");
-            viewer.appendChild(close);
-            close.addEventListener("click", () => {
-                viewer.remove();
-            });
-            let navWrapper = document.createElement("div");
-            navWrapper.setAttribute("class", "viewer-nav-wrapper");
-            let showAsset = (index) => {
-                viewer.querySelectorAll(".iframe-asset").forEach(el => el.remove());
-                let asset = null;
-                let path = arr[index]["path"];
-                let extension = path.substring(path.lastIndexOf("."), path.length);
-                if (extension == ".html") {
-                    asset = document.createElement("iframe");
-                    asset.setAttribute("class", "iframe-asset");
-                } else if (extension == ".mp4" || extension == ".mp3") {
-                    asset = document.createElement("video");
-                    asset.setAttribute("class", "video-asset");
-                    asset.setAttribute("controls", "");
-                } else {
-                    asset = document.createElement("img");
-                    asset.setAttribute("class", "image-asset");
-                }
-                asset.src = path;
-                viewer.appendChild(asset);
-            };
-            arr.forEach((page, index) => {
-                let navButton = document.createElement("button");
-                navButton.setAttribute("class", "nav-button");
-                navButton.innerText = `${index + 1}`;
-                navButton.addEventListener("click", () => {
-                    if (navButton.classList.contains("active")) return
-                    let lastAsset = viewer.querySelector("[class*='asset']");
-                    if (lastAsset) lastAsset.remove()
-                    let lastActive = navWrapper.querySelector(".active");
-                    if (lastActive) lastActive.classList.remove("active")
-                    navButton.classList.add("active");
-                    showAsset(index);
-                });
-                navWrapper.appendChild(navButton);
-            });
-            viewer.append(navWrapper);
-            navWrapper.querySelector("button").click();
-            document.body.appendChild(viewer);
-        };
-        elements.forEach(element => {
-            element.addEventListener("click", () => {
-                let exhibitData = JSON.parse(element.getAttribute("exhibit-data"));
-                showExhibit(exhibitData);
-            });
-        });
     }
 
     format(time) {
@@ -198,7 +134,6 @@ class Test {
     }
 
     getQuestions() {
-        this.questionData = shuffle(this.questionData);
         let questionLength = this.questionData.length;
         let questionData = [];
         for (let i = 0; i < questionLength; i++) {
@@ -222,6 +157,19 @@ class Test {
         return false;
     }
 
+    setMarkedData(id, value) {
+        for (let i = 0; i < this.markedData.length; i++) {
+            if (id == this.markedData[i]["id"]) {
+                this.markedData[i]["isChecked"] = value;
+                return
+            }
+        }
+        this.markedData.push({
+            "id": id,
+            "isChecked": value
+        });
+    }
+
     getAnswer(questionIndex) {
         let length = this.answerData.length;
         for (let i = 0; i < length; i++) {
@@ -236,27 +184,6 @@ class Test {
         return this.questionData[questionIndex]["correctAnswerIndex"];
     }
 
-    setMarkedData(id, value) {
-        for (let i = 0; i < this.markedData.length; i++) {
-            if (id == this.markedData[i]["id"]) {
-                this.markedData[i]["isChecked"] = value;
-                return
-            }
-        }
-        this.markedData.push({
-            "id": id,
-            "isChecked": value
-        });
-    }
-
-    prepareMarkedData() {
-        for (let i = 0; i < this.markedData.length; i++) {
-            this.markedData[i] = {
-                "id": this.markedData[i],
-                "isChecked": true
-            }
-        }
-    }
 
     showTestResult(time, correctQuestionCount, incorrectQuestionCount, UnansweredQuestionCount) {
         this.testResultoverlay.querySelector("#timeSpent").innerText = time;
@@ -265,6 +192,7 @@ class Test {
         this.testResultoverlay.querySelector("#unAnsweredQuestion").innerText = UnansweredQuestionCount;
         this.testResultoverlay.classList.add("show-overlay");
     }
+
 
     appendAnswer(currentQuestion, selectedAnswerIndex) {
         function isExits(currentQuestion, answerData) {
@@ -288,7 +216,7 @@ class Test {
         window.parent.postMessage({
             "type": "ADD_TO_USED",
             "id": this.questionData[this.currentQuestion]["questionId"]
-        }, "*")
+        }, "*");
     }
 
     initLayout() {
@@ -326,6 +254,7 @@ class Test {
                 "id": this.questionData[this.currentQuestion]["questionId"]
             }, "*");
         });
+
         this.valuesButton.addEventListener("click", () => {
             let isOpen = this.valuesWrapper.classList.contains("show-values");
             if (isOpen) {
@@ -368,6 +297,8 @@ class Test {
         });
     }
 
+
+
     initQuestionListeners() {
         let getAnswerIndex = input => {
             let inputList = this.questionExpContainer.querySelectorAll(".answer-radio");
@@ -379,8 +310,8 @@ class Test {
             }
             console.error("ANSWER INDEX NOT FOUNDED")
         }
-        this.questionExpContainer.querySelectorAll(".answer-radio").forEach(input => {
 
+        this.questionExpContainer.querySelectorAll(".answer-radio").forEach(input => {
             input.addEventListener("change", (e) => {
                 if (this.isFinished == false) {
                     let selectedAnswerIndex = getAnswerIndex(e.currentTarget);
@@ -406,27 +337,21 @@ class Test {
             }
             this.loadQuestion(this.currentQuestion);
         });
-        this.questionContainer.querySelectorAll("img").forEach(img => {
-            img.addEventListener("click", (e) => {
-                e.preventDefault();
-            });
-        });
-        this.Exhibit(this.questionContainer.querySelectorAll("[exhibit-data]"));
+
         Zoom(this.questionContainer.querySelectorAll("img"));
     }
 
     loadQuestion(index) {
         this.currentQuestion = index;
         let selectedAnswerIndex = this.getAnswer(index);
+        let markedChecked = this.getMarkedData(this.questionData[this.currentQuestion]["questionId"]);
+        this.markInput.checked = markedChecked;
         let active = this.questionsContainer.querySelector(".active");
         if (active) active.classList.remove("active");
         if (!this.isFinished) this.questionsContainer.querySelectorAll("li")[index].classList.add("active");
         let targetQuestion = this.questionData[index];
         this.currentCountElement.innerText = index + 1;
         this.questionContainer.innerHTML = targetQuestion["question"];
-        let markedChecked = this.getMarkedData(this.questionData[this.currentQuestion]["questionId"]);
-        this.markInput.checked = markedChecked;
-
         let btnWrapper = document.createElement("div");
         btnWrapper.setAttribute("class", "nav-button-wrapper");
         let btn = document.createElement("button");
@@ -478,7 +403,11 @@ class Test {
 
         this.questionContainer.querySelectorAll("a").forEach(a => a.setAttribute("target", "_blank"));
         this.initQuestionListeners();
-        this.questionExpContainer.scrollTo(0, 0);
+        this.questionExpContainer.scrollTo(0,0);
+        this.questionExpContainer.querySelectorAll("iframe").forEach(iframe => {
+            console.log(iframe.src);
+            iframe.src = "https://" + iframe.getAttribute("src").substring(2, iframe.getAttribute("src").length);
+        });
     }
 
     finishTest() {
@@ -496,18 +425,22 @@ class Test {
                     correctIdList.push(this.questionData[i]["questionId"]);
                 } else {
                     this.questionsContainer.querySelectorAll("li")[i].classList.add("incorrect");
-                    incorrectIdList.push(this.questionData[i]["questionId"]);
                     this.incorrectQuestion += 1;
+                    incorrectIdList.push(this.questionData[i]["questionId"]);
                 }
             } else {
                 this.unAnsweredQuestion += 1;
             }
         }
+
+        console.log("correct id list ", correctIdList);
+        console.log("incorrect id list", incorrectIdList);
         window.parent.postMessage({
             "type": "EDIT_CORRECT_AND_INCORRECT",
             "correctIdList": correctIdList,
             "incorrectIdList": incorrectIdList
         }, "*");
+
         this.loadQuestion(0);
     }
 
@@ -535,14 +468,18 @@ class Test {
             document.querySelector(".info-container").style.display = "block";
             localStorage.setItem("tutorial", true);
         }
-        this.questionData = this.getQuestions();
+        for (let i = 0; i < this.markedData.length; i++) {
+            this.markedData[i] = {
+                "id": this.markedData[i],
+                "isChecked": true
+            }
+        }
+        this.questionData = shuffle(this.getQuestions());
         this.questionLength = this.questionData.length;
-        this.prepareMarkedData();
         this.initLayout();
         this.initListeners();
         this.questionLength = this.questionData.length;
         this.startTest(this.time);
-        this.currentQuestion = 0;
         this.loadQuestion(this.currentQuestion);
         if (window.innerWidth < 768) {
             this.leftContainerButton.click();

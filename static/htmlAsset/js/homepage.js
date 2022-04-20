@@ -1,8 +1,9 @@
 //data varible coming from asset.jsonp
-const storageName = `${data["courseName"]}  ${data["courseUniqueId"]}`;
-
+const storageName = data["courseName"] + " " + data["courseUniqueId"];
 const QUOTA_EXCEEDED_ERROR_MESSAGE = "Local storage is full.Please clear your browser cache before taking any action.";
-const UNEXPECTED_ERROR_MESSAGE = "Unexpected error!";
+const UNEXPECTED_ERROR_MESSAGE = "Unexpected error! \n(Please check console for more details)";
+
+console.log(data, ": main data")
 
 if (!Promise.allSettled) {
     Promise.allSettled = promises =>
@@ -38,30 +39,7 @@ function readJSONP(src) {
     });
 }
 
-function readQuestion(element){
-    return new Promise((resolve, reject) => {
-        if(element){
-            resolve(element)
-        }else{
-            reject("Error")
-        }
-    })
-}
-
-function shuffle(array) {
-    let counter = array.length;
-    while (counter > 0) {
-        let index = Math.floor(Math.random() * counter);
-        counter--;
-        let temp = array[counter];
-        array[counter] = array[index];
-        array[index] = temp;
-    }
-    return array;
-}
-
 function getLocalStorage(storageName, emptyValue) {
-   
     try {
         let storage = JSON.parse(localStorage.getItem(storageName));
         if (!storage) {
@@ -70,26 +48,23 @@ function getLocalStorage(storageName, emptyValue) {
         }
         return storage
     } catch (e) {
+        console.error(e);
         if (isQuotaExceeded(e)) {
-            alert(QUOTA_EXCEEDED_ERROR_MESSAGE);
-        }else{
-            alert(UNEXPECTED_ERROR_MESSAGE);
+          alert(QUOTA_EXCEEDED_ERROR_MESSAGE);
         }
+        alert(UNEXPECTED_ERROR_MESSAGE);
     }
 }
 
 function setLocalStorage(storageName, value) {
     try {
-        localStorage.setItem(storageName, value);
-        return {
-            "status": "OK"
-        }
+        localStorage.setItem(storageName,value);
     } catch (e) {
+        console.error(e);
         if (isQuotaExceeded(e)) {
-            alert(QUOTA_EXCEEDED_ERROR_MESSAGE);
-        }else{
-            alert(UNEXPECTED_ERROR_MESSAGE);
+          alert(QUOTA_EXCEEDED_ERROR_MESSAGE);
         }
+        alert(UNEXPECTED_ERROR_MESSAGE);
     }
 }
 
@@ -113,6 +88,23 @@ function isQuotaExceeded(e) {
     return isQuotaExceeded;
 }
 
+
+function shuffle(array) {
+    let counter = array.length;
+    while (counter > 0) {
+        let index = Math.floor(Math.random() * counter);
+        counter--;
+        if (array[counter]["question"].includes('id="vignettedescriptor"') || array[index]["question"].includes('id="vignettedescriptor"') ||
+            array[counter]["question"].includes('Item 2 of 2') || array[index]["question"].includes('Item 2 of 2')) {
+            continue;
+        }
+        let temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+    }
+    return array;
+}
+
 Array.prototype.remove = function(val) {
     for (var i = 0; i < this.length; i++) {
         if (this[i] === val) {
@@ -123,22 +115,30 @@ Array.prototype.remove = function(val) {
     return this;
 }
 
+function readQuestion(element){
+    return new Promise((resolve, reject) => {
+        if(element){
+            resolve(element)
+        }else{
+            reject("Error")
+        }
+    })
+}
+
 class ExamBuilder {
     constructor(examData) {
+        this.examData = examData;
         this.noOfQuestionSpan = document.querySelector("#noOfQuestion .available-question");
         this.coursesDiv = document.querySelector("#courses");
         this.moduleIframe = document.querySelector("#testModule");
-        this.topicsDiv = document.querySelector("#topics");
         this.emptyLocalVarible = {
             "usedIdList": [],
             "markedIdList": [],
             "incorrectIdList": [],
             "correctIdList": []
         }
-        this.examData = examData;
         this.noOfQuestion = 0;
         this.labelIdCounter = 0;
-        this.labelCourseIdCounter = 0;
         this.numberOfQuestion = 100;
         this.secondsPerQuestion = 60;
         this.maxNumberOfQuestion = 200;
@@ -152,20 +152,20 @@ class ExamBuilder {
 
     getQuestionLength() {
         let questionLength = 0;
-        this.examData["data"].forEach(data => {
+        this.examData["subjects"].forEach(data => {
             questionLength += data["length"];
         });
         return questionLength;
     }
 
-    getLabelId() {
-        let currentLabelId = this.labelIdCounter;
-        this.labelIdCounter += 1;
-        return currentLabelId;
-    }
 
     getQuestionMode() {
         return document.querySelector('input[name="question-mode"]:checked').getAttribute("data")
+    }
+
+    setNoOfQuestion(length) {
+        this.noOfQuestion = length;
+        this.noOfQuestionSpan.innerText = length;
     }
 
     formatTime(time) {
@@ -199,6 +199,7 @@ class ExamBuilder {
         }
         return label;
     }
+    
     createLengthSpan(length) {
         let span = document.createElement("span");
         span.setAttribute("class", "available-question");
@@ -237,18 +238,32 @@ class ExamBuilder {
         span.setAttribute("class", "content-text");
         return span;
     }
+    setDisabledAll(arr) {
+        arr.forEach(div => {
+            if (!div.classList.contains('checkbox-disabled')) {
+                div.classList.add("checkbox-disabled");
+            }
+        });
+    }
 
     initDATA() {
-      
+        let checkExits = (arr, key, value) => {
+            for (let i = 0; i < arr.length; i++) {
+                if (arr[i][key] == value) {
+                    return i;
+                }
+            }
+            return false;
+        };
         let storage = this.getLocalStorage();
-        console.log("storage: ", storage)
+
         let usedQuestionLength = storage["usedIdList"].length;
         let allQuestionLength = this.getQuestionLength();
         let unusedQuestionLength = (allQuestionLength - usedQuestionLength);
         let markedQuestionLength = storage["markedIdList"].length;
         let correctQuestionLength = storage["correctIdList"].length;
         let inCorrectQuestionLength = storage["incorrectIdList"].length;
-       
+      
         document.querySelector("#all .available-question").innerText = allQuestionLength;
         document.querySelector("#used .available-question").innerText = usedQuestionLength;
         document.querySelector("#unused .available-question").innerText = unusedQuestionLength;
@@ -256,119 +271,188 @@ class ExamBuilder {
         document.querySelector("#incorrect .available-question").innerText = inCorrectQuestionLength;
         document.querySelector("#marked .available-question").innerText = markedQuestionLength;
 
-        let headerInput = document.createElement("input");
-        headerInput.setAttribute("id", "header-checkbox-0");
-        headerInput.type = "checkbox";
-        headerInput.classList.add("content-checkbox");
-        headerInput.addEventListener("change", () => {
-            this.noOfQuestion = 0;
-            this.topicList = [];
-            this.topicsDiv.querySelectorAll(".checkbox-label:not(.checkbox-disabled) input").forEach(topicInput => {
-                topicInput.checked = headerInput.checked;
-                topicInput.setAttribute("HEADER-INPUT", "");
-                topicInput.dispatchEvent(new Event("change"));
-            });
-        });
-
-        let checkAllTopicInputChecked = () => {
-            let control = true;
-            let topicsList = this.topicsDiv.querySelectorAll(".checkbox-label:not(.checkbox-disabled) input");
-            for (let i = 0; i < topicsList.length; i++) {
-                if (!topicsList[i].checked) {
-                    control = false;
-                    break
-                }
-            }
-            return control;
-        };
-
-        document.querySelector(`label[for='header-checkbox-${this.getLabelId()}']`).prepend(headerInput);
-
         document.title = this.examData["courseName"] + " Homepage";
-        let label = this.createLabel(`course - ${this.getLabelId()}`, this.examData["courseName"], "RADIO");
+
+        let label = this.createLabel(`course-${ this.labelIdCounter }`, this.examData["courseName"], "RADIO");
+        this.labelIdCounter += 1;
         label.querySelector("input").setAttribute("checked", "");
         this.coursesDiv.appendChild(label);
         let topicWrapper = document.createElement("div");
         topicWrapper.classList.add("topic-wrapper");
 
-        for (let i = 0; i < this.examData["data"].length; i++) {
-            let topic = this.createLabel(`content - checkbox - ${this.getLabelId()}`, this.examData["data"][i]["name"], "CHECKBOX", this.examData["data"][i]["idList"].length);
-            topic.querySelector("input").addEventListener("change", (e) => {
-                let input = e.currentTarget;
-                if (!input.hasAttribute("HEADER-INPUT")) {
-                    if (checkAllTopicInputChecked()) {
-                        headerInput.checked = true;
-                    } else {
-                        headerInput.checked = false;
-                    }
+        let systemList = [];
+
+        let subjectsDiv = document.querySelector("#subjects");
+        let systemsDiv = document.querySelector("#systems");
+
+        let subjectsLength = this.examData["subjects"].length;
+
+        let col = document.createElement("div");
+        col.setAttribute("class", "col");
+
+        for (let i = 0; i < subjectsLength; i++) {
+            
+            let subject = this.examData["subjects"][i];
+            let subjectLabel = this.createLabel(`content-${ this.labelIdCounter }`, subject["name"], "CHECKBOX", subject['length']);
+            this.labelIdCounter += 1;
+            
+            for (let x = 0; x < subject["data"].length; x++) {
+                let subjectData = subject['data'][x];
+                
+                let systemIndex = checkExits(systemList, "name", subjectData["name"]);
+
+                let system = null;
+                if (Number.isInteger(systemIndex)) {
+                    system = systemList[systemIndex];
                 } else {
-                    input.removeAttribute("HEADER-INPUT");
+                    system = {
+                        "name": subjectData["name"],
+                        "cats": []
+                    }
                 }
+               
+                for (let y = 0; y < subjectData["categorys"].length; y++) {
+                    let cat = subjectData["categorys"][y];
+                 
+                    if (!system['cats'].includes(cat["name"])) {
+                        system['cats'].push(cat["name"]);
+                    }
+                }
+
+                if (Number.isInteger(systemIndex)) {
+                    systemList[systemIndex] = system;
+                } else {
+                    systemList.push(system);
+                }
+            
+            }
+       
+            subjectLabel.querySelector("input").addEventListener("input", (e) => {
                 let qMODE = this.getQuestionMode();
                 let storage = this.getLocalStorage();
                 
-                let examIdData = this.examData["data"][i]["idList"];
-                
-                let questionIdData = [];
-                console.log("examData Length: ", examIdData.length)
-               
-                if (qMODE == "UNUSED") {
-                    for (let x = 0; x < examIdData.length; x++) {
-                        if (!storage["usedIdList"].includes(examIdData[x])) {
-                            questionIdData.push(examIdData[x]);
+                let subjectInput = e.currentTarget;
+                systemsDiv.querySelectorAll(".checkbox-label").forEach(label => {
+                    let isHeaderChecked = label.querySelector("input").checked;
+                    let systemText = label.querySelector(".content-text").innerText;
+                    subject["data"].forEach(system => {
+                        if (systemText == system["name"]) {
+                            let systemIdList = [];
+                            let systemAvailableQuestion = parseInt(label.querySelector(".available-question").innerText);
+                            label.nextSibling.querySelectorAll("label").forEach(categoryLabel => {
+                                let categoryText = categoryLabel.querySelector(".content-text").innerText;
+                                system["categorys"].forEach(category => {
+                                    if (categoryText == category["name"]) {
+                                        let categoryIdList = [];
+                                        let categoryAvailableQuestion = parseInt(categoryLabel.querySelector(".available-question").innerText);
+                                        category["idList"].forEach(id => {
+                                            if (qMODE == "UNUSED") {
+                                                if (!storage["usedIdList"].includes(id)) {
+                                                    categoryIdList.push(id);
+                                                }
+                                            } else if (qMODE == "USED") {
+                                                if (storage["usedIdList"].includes(id)) {
+                                                    categoryIdList.push(id);
+                                                }
+                                            } else if (qMODE == "MARKED") {
+                                                if (storage["markedIdList"].includes(id)) {
+                                                    categoryIdList.push(id);
+                                                }
+                                            } else if (qMODE == "CORRECT") {
+                                                if (storage["correctIdList"].includes(id)) {
+                                                    categoryIdList.push(id);
+                                                }
+                                            } else if (qMODE == "INCORRECT") {
+                                                if (storage["incorrectIdList"].includes(id)) {
+                                                    categoryIdList.push(id);
+                                                }
+                                            } else if (qMODE == "ALL") {
+                                                categoryIdList.push(id);
+                                            }
+                                        });
+                                        systemIdList = [].concat(systemIdList, categoryIdList);
+                                        (subjectInput.checked) ? categoryAvailableQuestion += categoryIdList.length: categoryAvailableQuestion -= categoryIdList.length;
+                                        categoryLabel.querySelector(".available-question").innerText = categoryAvailableQuestion;
+                                        if (categoryAvailableQuestion == 0) {
+                                            categoryLabel.classList.add("checkbox-disabled");
+                                            categoryLabel.querySelector("input").checked = false;
+                                        } else if(categoryLabel.classList.contains("checkbox-disabled")){
+                                            categoryLabel.classList.remove("checkbox-disabled");
+                                            categoryLabel.querySelector("input").checked = isHeaderChecked;
+                                        }
+                                    }
+                                });
+                            });
+                            (subjectInput.checked) ? systemAvailableQuestion += systemIdList.length: systemAvailableQuestion -= systemIdList.length;
+                            label.querySelector(".available-question").innerText = systemAvailableQuestion;
+                            if (systemAvailableQuestion == 0) {
+                                label.classList.add("checkbox-disabled");
+                                label.querySelector("input").checked = false;
+                            } else if(label.classList.contains("checkbox-disabled")){
+                                label.classList.remove("checkbox-disabled");
+                                if (document.querySelector(".system-row .header input").checked) {
+                                    
+                                    label.querySelector("input").checked = true;
+                                    label.querySelector("input").dispatchEvent(new Event("input"));
+                                }
+                            }
                         }
-                    }
-                } else if (qMODE == "USED") {
-                    for (let x = 0; x < examIdData.length; x++) {
-                        if (storage["usedIdList"].includes(examIdData[x])) {
-                            questionIdData.push(examIdData[x]);
-                        }
-                    }
-                } else if (qMODE == "MARKED") {
-                    for (let x = 0; x < examIdData.length; x++) {
-                        if (storage["markedIdList"].includes(examIdData[x])) {
-                            questionIdData.push(examIdData[x]);
-                        }
-                }
-                } else if (qMODE == "CORRECT") {
-                    for (let x = 0; x < examIdData.length; x++) {
-                        if (storage["correctIdList"].includes(examIdData[x])) {
-                            questionIdData.push(examIdData[x]);
-                        }
-                    }
-                } else if (qMODE == "INCORRECT") {
-                    for (let x = 0; x < examIdData.length; x++) {
-                        if (storage["incorrectIdList"].includes(examIdData[x])) {
-                            questionIdData.push(examIdData[x]);
-                        }
-                    }
-                } else if (qMODE == "ALL") {
-                    questionIdData = examIdData;
-                }
-                
-                if (input.checked) {
-                    this.noOfQuestion += questionIdData.length;
-                   
-                    this.topicList.push(this.examData["data"][i]["jsonp"]);
-                } else {
-                    this.noOfQuestion -= questionIdData.length;
-                    this.topicList = this.topicList.remove(this.examData["data"][i]["jsonp"]);
-                }
+                    });
+                });
+            });
+            col.appendChild(subjectLabel);
 
-                if (this.topicList.length == 0 || this.noOfQuestion < 0) {
-                    this.noOfQuestion = 0;
-                }
+            if (i == Math.round(subjectsLength / 2) - 1) {
+                subjectsDiv.appendChild(col);
+                col = document.createElement("div");
+                col.setAttribute("class", "col");
+            }
+        }
+        subjectsDiv.appendChild(col);
 
-                this.noOfQuestionSpan.innerText = this.noOfQuestion;
-                let numberOfQuestionEl = document.querySelector("#numberOfQuestion");
-                numberOfQuestionEl.value = (this.noOfQuestion >= 100) ? 100 : this.noOfQuestion;
-                numberOfQuestionEl.dispatchEvent(new Event("input"));
-                if (!input.hasAttribute("HEADER-INPUT")) {
-                    this.calculateTime();
+        let systemLength = systemList.length
+        col = document.createElement("div");
+        col.setAttribute("class", "col");
+        for (let i = 0; i < systemLength; i++) {
+            let system = systemList[i];
+            let systemLabel = this.createLabel(`content-${ this.labelIdCounter }`, system["name"], "CHECKBOX", "0");
+            let catWrapper = document.createElement("div");
+            catWrapper.setAttribute("for-target", `content-${this.labelIdCounter }`)
+            catWrapper.setAttribute("class", "cat-wrapper");
+            this.labelIdCounter += 1;
+            let expand = document.createElement("div");
+            expand.classList.add("expand");
+            expand.innerHTML = "&plus;";
+            expand.setAttribute("area-expanded", "false");
+            expand.addEventListener("click", (e) => {
+                e.preventDefault();
+                let areaExpanded = expand.getAttribute("area-expanded");
+                if (areaExpanded == "true") {
+                    expand.innerHTML = "&plus;";
+                    catWrapper.style.display = "none";
+                    expand.setAttribute("area-expanded", "false");
+                } else if (areaExpanded == "false") {
+                    expand.innerHTML = "&minus;";
+                    catWrapper.style.display = "block";
+                    expand.setAttribute("area-expanded", "true");
                 }
             });
-            this.topicsDiv.appendChild(topic);
+            systemLabel.appendChild(expand);
+            system["cats"].forEach(cat => {
+                let catLabel = this.createLabel(`content-${this.labelIdCounter}`, cat, "CHECKBOX", "0");
+                catWrapper.appendChild(catLabel);
+                this.labelIdCounter += 1;
+            });
+            col.appendChild(systemLabel);
+            col.appendChild(catWrapper);
+            if (i == Math.round(systemLength / 2) - 1) {
+                systemsDiv.appendChild(col);
+                col = document.createElement("div");
+                col.setAttribute("class", "col");
+            }
         }
+        systemsDiv.appendChild(col);
+        this.setDisabledAll(systemsDiv.querySelectorAll(".checkbox-label"));
     }
 
     initListeners() {
@@ -378,14 +462,10 @@ class ExamBuilder {
                 return
             }
             if (this.numberOfQuestion <= 0 || this.numberOfQuestion > this.noOfQuestion || isNaN(this.numberOfQuestion)) {
-                document.querySelector("#numberOfQuestion").value = "";
-                document.querySelector("#numberOfQuestion").dispatchEvent(new Event("input"));
                 alert("Please enter valid 'Number Of Questions' number.");
                 return
             }
             if (this.secondsPerQuestion <= 0 || isNaN(this.secondsPerQuestion)) {
-                document.querySelector("#secPerQuestion").value = "";
-                document.querySelector("#secPerQuestion").dispatchEvent(new Event("input"));
                 alert("Please enter valid 'Second(s) Per Question' number.");
                 return
             }
@@ -398,57 +478,91 @@ class ExamBuilder {
             if (this.secondsPerQuestion > this.maxSecondsPerQuestion) {
                 document.querySelector("#secPerQuestion").value = "360";
                 document.querySelector("#secPerQuestion").dispatchEvent(new Event("input"));
-                alert("Allowed maximum seconds is 360 for question");
+                alert("Allowed maximum seconds 360 for questions");
                 return;
             }
-
             document.title = this.examData["courseName"] + " Test";
             document.body.classList.add("generating");
             e.currentTarget.setAttribute("disabled", "");
             e.currentTarget.innerText = "Generating...";
             let promiseList = [];
             let QUESTION_DATA = [];
-            let testData = [];
+            let subjectList = [];
+            let systemList = [];
+            let subjectsDiv = document.querySelector("#subjects");
+            let systemsDiv = document.querySelector("#systems");
 
-            console.time("JSONP LOADING TIME")
-        
-            console.log("topicsList: ", this.topicList)
+            subjectsDiv.querySelectorAll(".checkbox-label input:checked").forEach(checkedInput => {
+                let subjectText = checkedInput.parentElement.querySelector(".content-text").innerText;
+                subjectList.push(subjectText);
+            });
 
+            systemsDiv.querySelectorAll("#systems .col > label:not(.checkbox-disabled) input").forEach(headerSystemInput => {
+                let label = headerSystemInput.parentElement;
+                let headerSystemText = label.querySelector(".content-text").innerText;
+                let systemDict = {
+                    "name": headerSystemText,
+                    "cats": []
+                }
+                let forTarget = label.getAttribute("for");
+                let checkedInputList = document.querySelectorAll(`div[for-target='${forTarget}'] input:checked`);
+                checkedInputList.forEach(checkedInput => {
+                    let systemCatText = checkedInput.parentElement.querySelector(".content-text").innerText;
+                    systemDict["cats"].push(systemCatText);
+                });
+                if (checkedInputList.length > 0) {
+                    systemList.push(systemDict);
+                }
+            });
+
+
+            this.examData["subjects"].forEach(subject => {
+                if (subjectList.includes(subject["name"])) {
+                    subject["data"].forEach(subjectData => {
+                        systemList.forEach(system => {
+                            if (system["name"] == subjectData["name"]) {
+                                subjectData["categorys"].forEach(category => {
+                                    if (system["cats"].includes(category['name'])) {
+                                        this.topicList.push(category["jsonp"]);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                }
+            });
+
+            console.time("JSONP LOADING TIME");
+            
+            // for (let i = 0; i < this.topicList.length; i++) {
+            //     let jsonp = await readJSONP(this.topicList[i]);
+            //     promiseList.push(jsonp);
+            // }
+            
             for (let i = 0; i < questions.length; i++) {
                 let list = await readQuestion(questions[i])
                 promiseList.push(list);
             }
             
             console.log(promiseList)
-            
-            // console.log("promiseList", promiseList)
-            // console.log(this.topicList)
-            
-            // for (let i = 0; i < 1; i++) {
-            //     let jsonp = await readJSONP("/static/jsonp/Biliary tree.jsonp");
-            //     promiseList.push(jsonp);
-            // }
 
             Promise.allSettled(promiseList).then(results => {
-                console.log("results", results)
+                
                 results.forEach(result => {
                     QUESTION_DATA = [].concat(QUESTION_DATA, result.value);
                 });
                 console.timeEnd("JSONP LOADING TIME")
-                QUESTION_DATA = shuffle(QUESTION_DATA);
                 let qMODE = this.getQuestionMode();
                 let storage = this.getLocalStorage();
-          
+                let testData = [];
+                QUESTION_DATA = shuffle(QUESTION_DATA);
                 for (let i = 0; i < QUESTION_DATA.length; i++) {
-                    if (qMODE == "ALL") {
-                        testData.push(QUESTION_DATA[i]);
-                    } else
-                    if (qMODE == "UNUSED") {
-                        if (!storage["usedIdList"].includes(QUESTION_DATA[i]["id"])) {
+                    if (qMODE == "USED") {
+                        if (storage["usedIdList"].includes(QUESTION_DATA[i]["id"])) {
                             testData.push(QUESTION_DATA[i]);
                         }
-                    } else if (qMODE == "USED") {
-                        if (storage["usedIdList"].includes(QUESTION_DATA[i]["id"])) {
+                    } else if (qMODE == "UNUSED") {
+                        if (!storage["usedIdList"].includes(QUESTION_DATA[i]["id"])) {
                             testData.push(QUESTION_DATA[i]);
                         }
                     } else if (qMODE == "CORRECT") {
@@ -463,9 +577,10 @@ class ExamBuilder {
                         if (storage["markedIdList"].includes(QUESTION_DATA[i]["id"])) {
                             testData.push(QUESTION_DATA[i]);
                         }
+                    } else if (qMODE == "ALL") {
+                        testData.push(QUESTION_DATA[i]);
                     }
                 }
-                
                 document.body.classList.remove("generating");
                 this.moduleIframe.src = "/static/htmlAsset/html/Module.html";
                 this.moduleIframe.style.display = "block";
@@ -476,68 +591,198 @@ class ExamBuilder {
                         "questionData": testData,
                         "secondsPerQuestion": this.secondsPerQuestion,
                         "numberOfQuestion": this.numberOfQuestion,
-                        "markedData": this.getLocalStorage()["markedIdList"]
+                        "markedData": storage["markedIdList"]
                     }, "*");
                     document.body.style.overflow = "hidden";
                 });
             });
         });
+
+        document.querySelector(".system-row .header input").addEventListener("input", (e) => {
+            let rowHeader = e.currentTarget;
+            document.querySelectorAll("#systems .col > label:not(.checkbox-disabled) input").forEach(subInput => {
+                if (rowHeader.checked != subInput.checked) {
+                    subInput.checked = rowHeader.checked;
+                    subInput.setAttribute("header-action", "");
+                    subInput.dispatchEvent(new Event('input'));
+                }
+            });
+        });
+
+        document.querySelector(".subject-row .header input").addEventListener("input", (e) => {
+            let headerInput = e.currentTarget;
+            let subInputs = document.querySelectorAll("#subjects .checkbox-label:not(.checkbox-disabled) input");
+            subInputs.forEach(subInput => {
+                if (subInput.checked != headerInput.checked) {
+                    subInput.checked = headerInput.checked;
+                    subInput.setAttribute("header-action", "");
+                    subInput.dispatchEvent(new Event('input'));
+                }
+            });
+        });
+
+        document.querySelectorAll("#subjects .checkbox-label").forEach(label => {
+            let subInput = label.querySelector("input");
+            let headerInput = document.querySelector(".subject-row .header input");
+            let checkAllChecked = (domList) => {
+                let isAllChecked = true;
+                for (let i = 0; i < domList.length; i++) {
+                    if (!domList[i].checked) {
+                        isAllChecked = false;
+                        break
+                    }
+                }
+                return isAllChecked;
+            };
+            subInput.addEventListener("input", () => {
+                let subInputs = document.querySelectorAll("#subjects .checkbox-label:not(.checkbox-disabled) input");
+                if (subInput.hasAttribute("header-action")) {
+                    subInput.removeAttribute("header-action");
+                } else {
+                    let isAllChecked = checkAllChecked(subInputs);
+                    headerInput.checked = isAllChecked;
+                }
+            });
+        });
+
+        document.querySelectorAll("#systems .col > .checkbox-label").forEach(label => {
+            let checkAllChecked = (domList) => {
+                let isAllChecked = true;
+                for (let i = 0; i < domList.length; i++) {
+                    if (!domList[i].checked) {
+                        isAllChecked = false;
+                        break
+                    }
+                }
+                return isAllChecked;
+            };
+            let headerInput = label.querySelector("input");
+            let forTarget = label.getAttribute("for");
+            let catWrapper = document.querySelector(`.cat-wrapper[for-target='${forTarget}']`);
+            headerInput.addEventListener("input", (e) => {
+                let subInputs = catWrapper.querySelectorAll(".checkbox-label:not(.checkbox-disabled) input");
+                subInputs.forEach(subInput => {
+                    if (subInput.checked != headerInput.checked) {
+                        subInput.checked = headerInput.checked;
+                        subInput.setAttribute("header-action", "");
+                        subInput.dispatchEvent(new Event('input'));
+                    }
+                });
+            });
+            catWrapper.querySelectorAll(".checkbox-label input").forEach(subInput => {
+                subInput.addEventListener("input", () => {
+                    let subInputs = catWrapper.querySelectorAll(".checkbox-label:not(.checkbox-disabled) input");
+                    if (subInput.hasAttribute("header-action")) {
+                        subInput.removeAttribute("header-action");
+                    } else {
+                        let isAllChecked = checkAllChecked(subInputs);
+                        headerInput.checked = isAllChecked;
+                    }
+                });
+            });
+        });
+
+        document.querySelectorAll("#systems .checkbox-label, #subjects .checkbox-label").forEach(label => {
+            let input = label.querySelector("input");
+            let getNoOfQuestion = () => {
+                let noOfQuestion = 0;
+                document.querySelectorAll("#systems .cat-wrapper .checkbox-label:not(.checkbox-disabled)").forEach(checkboxLabel => {
+                    let input = checkboxLabel.querySelector("input");
+                    if (input.checked) {
+                        let availableQuestion = checkboxLabel.querySelector(".available-question");
+                        noOfQuestion += parseInt(availableQuestion.innerText);
+                    }
+                });
+                return noOfQuestion;
+            }
+            input.addEventListener("input", (e) => {
+                let noOfQuestion = getNoOfQuestion();
+                let numberOfQuestionEl = document.querySelector("#numberOfQuestion");
+                numberOfQuestionEl.value = (noOfQuestion >= 100) ? 100 : noOfQuestion;
+                numberOfQuestionEl.dispatchEvent(new Event("input"));
+                this.setNoOfQuestion(noOfQuestion);
+                this.calculateTime();
+            });
+        });
+
         document.querySelectorAll('input[name="question-mode"]').forEach(qModeInput => {
             qModeInput.addEventListener("change", () => {
-                let qMODE = qModeInput.getAttribute("data");
+                let findLabel = (text) => {
+                    let subjects = document.querySelectorAll("#subjects .checkbox-label");
+                    for (let i = 0; i < subjects.length; i++) {
+                        let contentText = subjects[i].querySelector(".content-text").innerText;
+                        if (contentText == text) {
+                            return subjects[i];
+                        }
+                    }
+                    return false;
+                };
+                let qMode = qModeInput.getAttribute("data");
                 let storage = this.getLocalStorage();
-                this.topicsDiv.querySelectorAll(".available-question").forEach((span, index) => {
-                    let topicIdList = data["data"][index]["idList"];
-                    let topicIdListLength = topicIdList.length;
-                    let availableLength = 0;
-                    if (qMODE == "UNUSED") {
-                        for (let i = 0; i < topicIdListLength; i++) {
-                            if (!storage["usedIdList"].includes(topicIdList[i])) {
-                                availableLength += 1;
-                            }
-                        }
-                    } else if (qMODE == "USED") {
-                        for (let i = 0; i < topicIdListLength; i++) {
-                            if (storage["usedIdList"].includes(topicIdList[i])) {
-                                availableLength += 1;
-                            }
-                        }
-                    } else if (qMODE == "MARKED") {
-                        for (let i = 0; i < topicIdListLength; i++) {
-                            if (storage["markedIdList"].includes(topicIdList[i])) {
-                                availableLength += 1;
-                            }
-                        }
-                    } else if (qMODE == "CORRECT") {
-                        for (let i = 0; i < topicIdListLength; i++) {
-                            if (storage["correctIdList"].includes(topicIdList[i])) {
-                                availableLength += 1;
-                            }
-                        }
-                    } else if (qMODE == "INCORRECT") {
-                        for (let i = 0; i < topicIdListLength; i++) {
-                            if (storage["incorrectIdList"].includes(topicIdList[i])) {
-                                availableLength += 1;
-                            }
-                        }
-                    } else if (qMODE == "ALL") {
-                        availableLength = topicIdListLength;
-                    }
-                    if (availableLength == 0) {
-                        span.parentElement.classList.add("checkbox-disabled");
-                    } else if (availableLength > 0) {
-                        span.parentElement.classList.remove("checkbox-disabled");
-                    }
-                    span.innerText = availableLength;
-                });
-                document.querySelector("#numberOfQuestion").value = "0";
-                document.querySelectorAll(".content-checkbox").forEach(topicInput => {
-                    if (topicInput.checked) {
-                        topicInput.checked = false;
+                document.querySelectorAll("#systems .checkbox-label").forEach(label => {
+                    label.querySelector("input").checked = false;
+                    label.querySelector(".available-question").innerText = "0";
+                    if (!label.classList.contains("checkbox-disabled")) {
+                        label.classList.add("checkbox-disabled");
                     }
                 });
+
+                document.querySelectorAll(".system-row .header input, .subject-row .header input").forEach(input => {
+                    if (input.checked) input.checked = false;
+                });
+
+
+                document.querySelectorAll("#subjects .checkbox-label").forEach(label => {
+                    label.querySelector("input").checked = false;
+                    label.querySelector(".available-question").innerText = "0";
+                });
+
+                this.examData["subjects"].forEach(subject => {
+                    let subjectLabel = findLabel(subject['name']);
+                    let subjectLength = 0;
+                    let catList = [];
+                    subject["data"].forEach(system => {
+                        catList = [].concat(catList, system["categorys"]);
+                    });
+                    catList.forEach(cat => {
+                        cat["idList"].forEach(id => {
+                            if (qMode == "UNUSED") {
+                                if (!storage['usedIdList'].includes(id)) {
+                                    subjectLength += 1;
+                                }
+                            } else if (qMode == "USED") {
+                                if (storage['usedIdList'].includes(id)) {
+                                    subjectLength += 1;
+                                }
+                            } else if (qMode == "MARKED") {
+                                if (storage['markedIdList'].includes(id)) {
+                                    subjectLength += 1;
+                                }
+                            } else if (qMode == "CORRECT") {
+                                if (storage['correctIdList'].includes(id)) {
+                                    subjectLength += 1;
+                                }
+                            } else if (qMode == "INCORRECT") {
+                                if (storage['incorrectIdList'].includes(id)) {
+                                    subjectLength += 1;
+                                }
+                            } else if (qMode == "ALL") {
+                                subjectLength += 1;
+                            }
+                        });
+                    });
+                    subjectLabel.querySelector(".available-question").innerText = subjectLength;
+                    if (subjectLength == 0 && !subjectLabel.classList.contains("checkbox-disabled")) {
+                        subjectLabel.classList.add("checkbox-disabled");
+                    } else if (subjectLength > 0 && subjectLabel.classList.contains("checkbox-disabled")) {
+                        subjectLabel.classList.remove("checkbox-disabled");
+                    }
+                });
+
                 this.topicList = [];
                 this.noOfQuestion = 0;
+                document.querySelector("#numberOfQuestion").value = this.noOfQuestion;
+                document.querySelector("#numberOfQuestion").dispatchEvent(new Event("input"));
                 this.noOfQuestionSpan.innerText = this.noOfQuestion;
             });
         });
@@ -571,13 +816,17 @@ class ExamBuilder {
         document.querySelector(".time-text").innerText = timeText + " " + timeSuffix;
     }
     init() {
-        this.initListeners();
         this.initDATA();
+        this.initListeners();
     }
 }
 
 const examBuilder = new ExamBuilder(data);
 examBuilder.init();
+
+document.querySelectorAll(".subject-row input, .system-row input", (input) => {
+    if (input.checked) input.checked = false
+});
 document.body.classList.remove("generating");
 window.onmessage = (e) => {
     if (e.data["type"] == "WINDOW_RELOAD") {
@@ -589,7 +838,7 @@ window.onmessage = (e) => {
         if (!storage["usedIdList"].includes(id)) {
             storage["usedIdList"].push(id);
         }
-        response = setLocalStorage(storageName, JSON.stringify(storage));
+        setLocalStorage(storageName, JSON.stringify(storage));
     }
     if (e.data["type"] == "ADD_TO_MARKED") {
         let storage = examBuilder.getLocalStorage();

@@ -1,9 +1,7 @@
 from django.shortcuts import render
 
-from .models import Category, Course, Question
+from .models import Category, Course
 import json
-# Create your views here.
-from django.templatetags.static import static
 
 def course(request, course_id=None):
         
@@ -14,40 +12,68 @@ def course(request, course_id=None):
     #     # Question.objects.create(question="%r" % x["question"], correctAnswerIndex=x["correctAnswerIndex"], exp="%r" % x["exp"], course=course)
 
     # category = Category.objects.filter(course=course)
-    categories = Category.objects.filter(course=course)
-    
-    questions_ids = list(categories.values_list('question__id', flat=True))
+
+    categories = Category.objects.filter(course=course, isMainCategory=True)
 
     questions = []
-    categories_list = []
+
+    subjects = []
 
     for x in categories:
-        for question in x.question.all():
-            questions.append({
-                "correctAnswerIndex": question.correctAnswerIndex,
-                "exp": question.exp,
-                "question": question.question,
-                "id": question.id
-        })  
+        datalist = []
 
-        categories_list.append(
-            {
-                "name": x.name, 
-                "idList": questions_ids, 
-                "length": len(questions_ids)
-            }
-        )
+        for y in x.get_children():
+            ques = []
+            que_ids = []
+            my_categories = []
+        
+            for z in y.question.all():
+                ques.append({
+                    "question": "",
+                    "exp": "",
+                    "id": z.id,
+                })
 
-    data = {
-        "courseName": course.courseName, 
-        "courseUniqueId": course.pk, 
-        "data": categories_list
+                que_ids.append(z.id)
+
+            for i in y.get_children():
+                my_categories.append({
+                    "name": i.name,
+                    "idList": list(i.question.values_list('id', flat=True)),
+                    "length": len(i.question.values_list('id', flat=True))
+                })
+
+                for question in i.question.all():
+                    questions.append({
+                        "correctAnswerIndex": question.correctAnswerIndex,
+                        "exp": question.exp,
+                        "question": question.question,
+                        "id": question.id
+                })
+
+            datalist.append({
+                "categorys": my_categories,
+                "name": y.name,
+                "length": y.question.count(),
+            })
+            
+        subjects.append({
+            "name": x.name,
+            "length": x.get_descendant_count(),
+            "data": datalist
+        })
+  
+    datax = {
+        "courseName": course.courseName,
+        "courseUniqueId": course.id,
+        "subjects": subjects
     }
 
-    data = json.dumps(data)
+    datax = json.dumps(datax)
+
     q = json.dumps(questions)
 
-    return render(request, "Homepage.html", {"data": data, "questions": questions, "q": q})
+    return render(request, "Homepage.html", {"questions": questions, "q": q, "datax": datax})
 
 def course_list(request):
     categories = Category.objects.all()
@@ -55,6 +81,7 @@ def course_list(request):
     return render(request, "courses.html", {"categories": categories})
 
 def index(request):
+
     courses = Course.objects.all()
     
     return render(request, "index.html", {"courses": courses})
@@ -70,4 +97,5 @@ def login(request):
 
 def signup(request):
     return render(request, "auth/register-basic.html")
+
 
