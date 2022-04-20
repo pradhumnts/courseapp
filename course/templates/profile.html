@@ -18,17 +18,16 @@
                         </div>
                     </div>
                     <div class="row align-items-center mt-4">
-                        <div class="col-auto">
-                            <!-- Avatar -->
-                            <img alt="Image placeholder" src="{% static 'assets/img/theme/light/person-auth.jpg' %}" class="avatar avatar-lg rounded-circle" />
-                        </div>
-                        <div class="col ml-n3 ml-md-n2">
+                        <!-- <div class="col-auto">
+                            <img alt="Image placeholder" src="{% static 'assets/img/theme/light/placeholder.png' %}" class="avatar avatar-lg rounded-circle" />
+                        </div> -->
+                        <div class="col ml-n3 ml-md-n1">
                             <!-- Title -->
                             <h3 class="mb-0">
-                                <b>Emma</b> Stone
+                                <b>{{ request.user.username }}</b>
                             </h3>
                             <!-- Subtitle -->
-                            <span class="text-muted d-block">Sales Manager</span>
+                            <span class="text-muted d-block">{{ request.user.email }}</span>
                         </div>
                     </div>
                 </div>
@@ -46,19 +45,20 @@
                                 <!-- Title -->
                                 <h5 class="mb-3">General information</h5>
                                 <!-- Form -->
-                                <form>
+                                <form method="post">
+                                    {% csrf_token %}
                                     <!-- General information -->
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-control-label">First name</label>
-                                                <input class="form-control" type="text" placeholder="Enter your first name">
+                                                <input name="firstname" class="form-control" type="text" value="{{ request.user.first_name }}" placeholder="Enter your first name here">
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-control-label">Last name</label>
-                                                <input class="form-control" type="text" placeholder="Also your last name">
+                                                <input name="lastname" class="form-control" type="text" value="{{ request.user.last_name }}"placeholder="Enter your last name here">
                                             </div>
                                         </div>
                                     </div>
@@ -66,20 +66,20 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="form-control-label">Email</label>
-                                                <input class="form-control" type="email" placeholder="name@exmaple.com">
+                                                <input class="form-control" type="email" value="{{ request.user.email }}" name="email" placeholder="{{ request.user.email }}">
                                                 <small class="form-text text-muted mt-2">This is the main email address that we'll send notifications.</small>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="form-control-label">Phone</label>
-                                                <input class="form-control" type="text" placeholder="+40-777 245 549">
+                                                <label class="form-control-label">Username</label>
+                                                <input class="form-control" type="text" disabled placeholder="{{ request.user.username }}">
                                             </div>
                                         </div>
                                     </div>
                                     <!-- Buttons -->
                                     <div class="mt-3">
-                                        <button type="button" class="btn btn-sm btn-primary" id="save">Save</button>
+                                        <button type="submit" class="btn btn-sm btn-primary" id="save">Save</button>
                                     </div>
                                 </form>
                             </div>   
@@ -186,17 +186,16 @@
     </footer>
 
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% if profile_update %}
     <script>
-   document.getElementById("save").addEventListener("click", function(){
+
     Swal.fire({
   icon: 'success',
   title: 'Changes Saved',
   text: 'Profile Update Successfull!',
-})
-   })
-   
+}) 
     </script>
-
+    {% endif %}
     <script>
         document.getElementById("delete").addEventListener("click", function(){
             Swal.fire({

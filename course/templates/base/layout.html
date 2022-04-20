@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="Webpixels">
-    <title>Home</title>
+    <title>{% block title %}{% endblock %}</title>
     <!-- Preloader -->
     <style>
         @keyframes hidePreloader {
@@ -190,18 +190,33 @@
                     <!-- Right navigation -->
                     <ul class="navbar-nav align-items-lg-center d-none d-lg-flex ml-lg-auto">
                         <!-- Auth -->
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">
-                                Sign in
+                        {% if request.user.is_authenticated %}
+                        <li class="nav-item ml-3">
+                            <a class="nav-link" href="{% url 'profile' %}">
+                                {{ request.user.username }}
                             </a>
                         </li>
 
+                        <form method="post" action="{% url 'account_logout' %}">
+                            {% csrf_token %}
+                            {% if redirect_field_value %}
+                            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+                            {% endif %}
+                           
+                            <button type="submit" class="nav-item nav-link btn btn-sm btn-light-primary py-2 px-2">Sign Out</button>
+                          </form>
+                        {% else %}
                         <li class="nav-item ml-3">
-                            <a href="{% url 'profile' %}">
-                                <img alt="Image placeholder" src="{% static 'assets/img/theme/light/person-1.jpg' %}" class="avatar  rounded-circle avatar-sm">
+                            <a class="nav-link" href="{% url 'account_login' %}">
+                                Sign in
                             </a>
                         </li>
-                         
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'account_signup' %}">
+                                Register
+                            </a>
+                        </li>
+                        {% endif %}
                     </ul>
                     
                 </div>

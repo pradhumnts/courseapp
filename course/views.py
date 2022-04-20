@@ -2,7 +2,10 @@ from django.shortcuts import render
 
 from .models import Category, Course
 import json
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
+@login_required
 def course(request, course_id=None):
         
     course = Course.objects.get(id=course_id)
@@ -81,21 +84,29 @@ def course_list(request):
     return render(request, "courses.html", {"categories": categories})
 
 def index(request):
-
     courses = Course.objects.all()
     
     return render(request, "index.html", {"courses": courses})
 
+@login_required
 def profile(request):
-    return render(request, "profile.html")
+    data = {}
+    if request.method == "POST":
+        firstname = request.POST.get('firstname')
+        lastname = request.POST.get('lastname')
+        email = request.POST.get('email')
+        
+        if request.POST.get('email'):
+            request.user.first_name = firstname
+            request.user.last_name = lastname
+            request.user.email = email
+            request.user.save()
+
+        data["profile_update"] = True
+    
+    return render(request, "profile.html", data)
 
 def pricing(request):
     return render(request, "pricing.html")
-
-def login(request):
-    return render(request, "auth/login-basic.html")
-
-def signup(request):
-    return render(request, "auth/register-basic.html")
 
 

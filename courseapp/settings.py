@@ -38,7 +38,36 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'course',
     'mptt',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+SITE_ID = 1
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': '123',
+            'secret': '456',
+            'key': ''
+        }
+    }
+}
+
+LOGIN_URL='/login'
+LOGIN_REDIRECT_URL='/login'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' 
+
+ACCOUNT_FORMS = {'login': 'course.forms.Loginform'}
+
+ACCOUNT_ADAPTER = 'course.allauth.AccountAdapter'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -66,6 +95,12 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 WSGI_APPLICATION = 'courseapp.wsgi.application'
